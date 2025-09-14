@@ -15,7 +15,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import ifcopenshell
 import ifcopenshell.geom
@@ -294,7 +294,7 @@ class Patcher(ifcpatch.BasePatcher):
         id_map_rows: list[tuple[int, str]] = []
         pset_rows: list[tuple[int, str, str, Any]] = []
 
-        def batch_insert(cursor, table_name, data, batch_size=batch_size):
+        def batch_insert(cursor: Any, table_name: str, data: list[Any], batch_size: int = batch_size) -> None:
             for i in range(0, len(data), batch_size):
                 batch = data[i : i + batch_size]
                 cursor.executemany(
@@ -465,23 +465,25 @@ class Patcher(ifcpatch.BasePatcher):
                 )
                 if representation:
                     break
-            geometry_id = None
+            element_geometry_id: Optional[str] = None
             if representation:
                 geometry_id_ = str(representation.id())
                 if geometry_id_ in self.geometry_rows:
-                    geometry_id = geometry_id_
-                elif geometry := ifcopenshell.geom.create_shape(
-                    self.settings, representation
-                ):
-                    geometry_id = geometry_id_
-                    assert isinstance(geometry, W.Triangulation)
-                    self.add_geometry_row(geometry_id, geometry)
+                    element_geometry_id = geometry_id_
+                else:
+                    element_geometry: Any = ifcopenshell.geom.create_shape(
+                        self.settings, representation
+                    )
+                    if element_geometry is not None:
+                        element_geometry_id = geometry_id_
+                        assert isinstance(element_geometry, W.Triangulation)
+                        self.add_geometry_row(element_geometry_id, element_geometry)
             shape_id = element_type.id()
             self.shape_rows[shape_id] = (
                 shape_id,
                 *(0.0, 0.0, 0.0),
                 m_bytes,
-                geometry_id,
+                element_geometry_id,
             )
 
     def add_geometry_row(self, geometry_id: str, geometry: W.Triangulation) -> None:
