@@ -1,0 +1,22 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+include setup.py
+recursive-include ifc2duckdb *.py
+recursive-include docs *.md *.png *.jpg *.jpeg *.gif *.svg
+recursive-include tests *.py *.json *.yaml *.yml
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude *.egg-info
+global-exclude .pytest_cache
+global-exclude .coverage
+global-exclude htmlcov
+global-exclude .mypy_cache
+global-exclude .tox
+global-exclude .venv
+global-exclude venv
+global-exclude env

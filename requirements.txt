@@ -1,1 +1,4 @@
-ifcopenshell
+ifcopenshell>=0.8.0
+duckdb>=0.7.0
+numpy>=1.20.0
+ifcpatch>=0.1.0
