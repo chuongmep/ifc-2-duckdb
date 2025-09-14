@@ -6,6 +6,8 @@ Convert IFC files to DuckDB format for fast analysis and querying of Building In
 [![License](https://img.shields.io/badge/license-LGPL--3.0--or--later-green.svg)](https://spdx.org/licenses/LGPL-3.0-or-later.html)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+![](./docs/ifc2duckdb.png)
+
 ## Features
 
 - **Fast Conversion**: Convert IFC files to DuckDB format for high-performance querying
