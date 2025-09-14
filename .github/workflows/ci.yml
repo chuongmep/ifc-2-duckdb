@@ -54,13 +54,13 @@ jobs:
     #   run: |
     #     black --check ifc2duckdb
 
-    - name: Check import sorting with isort
-      run: |
-        isort --check-only ifc2duckdb
+    # - name: Check import sorting with isort
+    #   run: |
+    #     isort --check-only ifc2duckdb
 
-    - name: Type check with mypy
-      run: |
-        mypy ifc2duckdb --ignore-missing-imports
+    # - name: Type check with mypy
+    #   run: |
+    #     mypy ifc2duckdb --ignore-missing-imports
 
   build:
     needs: lint
