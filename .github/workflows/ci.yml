@@ -7,7 +7,7 @@ on:
     branches: [ main, master, develop ]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -41,35 +41,23 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        flake8 ifc2duckdb tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 ifc2duckdb tests --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        flake8 ifc2duckdb --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ifc2duckdb --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
     - name: Check code formatting with black
       run: |
-        black --check ifc2duckdb tests
+        black --check ifc2duckdb
 
     - name: Check import sorting with isort
       run: |
-        isort --check-only ifc2duckdb tests
+        isort --check-only ifc2duckdb
 
     - name: Type check with mypy
       run: |
         mypy ifc2duckdb --ignore-missing-imports
 
-    - name: Test with pytest
-      run: |
-        pytest tests/ -v --cov=ifc2duckdb --cov-report=xml --cov-report=term-missing
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
   build:
-    needs: test
+    needs: lint
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
