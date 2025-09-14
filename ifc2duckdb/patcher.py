@@ -9,14 +9,12 @@
 
 from __future__ import annotations
 
-import json
 import itertools
+import json
 import logging
 import os
 import re
 import time
-import typing
-from pathlib import Path
 from typing import Any, Union
 
 import ifcopenshell
@@ -29,13 +27,10 @@ import ifcopenshell.util.representation
 import ifcopenshell.util.schema
 import ifcopenshell.util.shape
 import ifcopenshell.util.unit
-import numpy as np
 import ifcpatch
+import numpy as np
 
-try:
-    import duckdb  # type: ignore
-except ImportError as e:  # pragma: no cover
-    raise RuntimeError("duckdb package is required for export") from e
+# DuckDB will be imported in the patch method when needed
 
 DEFAULT_DATABASE_NAME = "database.duckdb"
 
@@ -89,6 +84,7 @@ class Patcher(ifcpatch.BasePatcher):
 
     def patch(self) -> None:
         from pathlib import Path
+
         import duckdb
         import ifcopenshell
 
@@ -118,7 +114,8 @@ class Patcher(ifcpatch.BasePatcher):
 
         if self.full_schema:
             ifc_classes = [
-                d.name() for d in self.schema.declarations()
+                d.name()
+                for d in self.schema.declarations()
                 if isinstance(d, ifcopenshell.ifcopenshell_wrapper.entity)
             ]
         else:
@@ -140,8 +137,7 @@ class Patcher(ifcpatch.BasePatcher):
                 shape_values = [tuple(v) for v in self.shape_rows.values()]
                 if shape_values:  # ensure not empty
                     self.c.executemany(
-                        "INSERT INTO shape VALUES (?, ?, ?, ?, ?, ?);",
-                        shape_values
+                        "INSERT INTO shape VALUES (?, ?, ?, ?, ?, ?);", shape_values
                     )
 
             if self.geometry_rows:
@@ -149,14 +145,12 @@ class Patcher(ifcpatch.BasePatcher):
                 if geometry_values:  # ensure not empty
                     self.c.executemany(
                         "INSERT INTO geometry VALUES (?, ?, ?, ?, ?, ?);",
-                        geometry_values
+                        geometry_values,
                     )
 
         self.db.commit()
         self.c.close()
         self.db.close()
-
-
 
     # ---- Schema helpers ----
     def check_existing_ifc_database(self) -> None:
@@ -178,7 +172,11 @@ class Patcher(ifcpatch.BasePatcher):
         )
 
     def create_metadata(self) -> None:
-        metadata = ["IfcOpenShell-1.0.0", self.file.schema, self.file.header.file_description.description[0]]
+        metadata = [
+            "IfcOpenShell-1.0.0",
+            self.file.schema,
+            self.file.header.file_description.description[0],
+        ]
         self.c.execute(
             "CREATE TABLE IF NOT EXISTS metadata (preprocessor TEXT, schema TEXT, mvd TEXT);"
         )
@@ -223,9 +221,7 @@ class Patcher(ifcpatch.BasePatcher):
         )
 
     def create_table(
-        self,
-        ifc_class: str,
-        declaration: ifcopenshell.ifcopenshell_wrapper.declaration
+        self, ifc_class: str, declaration: ifcopenshell.ifcopenshell_wrapper.declaration
     ) -> None:
         # Start CREATE TABLE statement, quote table name
         statement = f'CREATE TABLE IF NOT EXISTS "{ifc_class}" ('
@@ -260,7 +256,11 @@ class Patcher(ifcpatch.BasePatcher):
                 data_type = "JSON"
             else:
                 data_type = "TEXT"
-                print("Possibly not implemented attribute data type:", attribute, primitive)
+                print(
+                    "Possibly not implemented attribute data type:",
+                    attribute,
+                    primitive,
+                )
 
             # Handle optional/NOT NULL
             if not self.is_strict or derived[i]:
@@ -284,7 +284,6 @@ class Patcher(ifcpatch.BasePatcher):
         # Execute
         self.c.execute(statement)
 
-
     def insert_data(self, ifc_class: str, batch_size: int = 1000) -> None:
         """
         Insert data of a specific IFC class into the database.
@@ -297,10 +296,10 @@ class Patcher(ifcpatch.BasePatcher):
 
         def batch_insert(cursor, table_name, data, batch_size=batch_size):
             for i in range(0, len(data), batch_size):
-                batch = data[i:i + batch_size]
+                batch = data[i : i + batch_size]
                 cursor.executemany(
                     f"INSERT INTO {table_name} VALUES ({','.join(['?'] * len(batch[0]))});",
-                    batch
+                    batch,
                 )
 
         for element in elements:
@@ -312,8 +311,20 @@ class Patcher(ifcpatch.BasePatcher):
                     if attribute.id():
                         values.append(attribute.id())
                     else:
-                        values.append(json.dumps({"type": attribute.is_a(), "value": attribute.wrappedValue}))
-                elif self.should_expand and attribute and isinstance(attribute, tuple) and isinstance(attribute[0], ifcopenshell.entity_instance):
+                        values.append(
+                            json.dumps(
+                                {
+                                    "type": attribute.is_a(),
+                                    "value": attribute.wrappedValue,
+                                }
+                            )
+                        )
+                elif (
+                    self.should_expand
+                    and attribute
+                    and isinstance(attribute, tuple)
+                    and isinstance(attribute[0], ifcopenshell.entity_instance)
+                ):
                     nested_indices.append(i + 1)
                     serialized = self.serialise_value(element, attribute)
                     if attribute[0].id():
@@ -350,7 +361,14 @@ class Patcher(ifcpatch.BasePatcher):
                 if placement := getattr(element, "ObjectPlacement", None):
                     m = ifcopenshell.util.placement.get_local_placement(placement)
                     x, y, z = m[:, 3][0:3].tolist()
-                    self.shape_rows[element.id()] = (element.id(), x, y, z, m.tobytes(), None)
+                    self.shape_rows[element.id()] = (
+                        element.id(),
+                        x,
+                        y,
+                        z,
+                        m.tobytes(),
+                        None,
+                    )
 
         # ---- Insert into database using transaction + batching ----
         if rows or id_map_rows or pset_rows:
@@ -385,14 +403,18 @@ class Patcher(ifcpatch.BasePatcher):
         body_contexts.extend(
             [
                 c.id()
-                for c in self.file.by_type("IfcGeometricRepresentationContext", include_subtypes=False)
+                for c in self.file.by_type(
+                    "IfcGeometricRepresentationContext", include_subtypes=False
+                )
                 if c.ContextType == "Model"
             ]
         )
         self.settings.set("context-ids", body_contexts)
 
         products = elements
-        iterator = ifcopenshell.geom.iterator(self.settings, self.file, os.cpu_count() or 1, include=products)
+        iterator = ifcopenshell.geom.iterator(
+            self.settings, self.file, os.cpu_count() or 1, include=products
+        )
         if not iterator.initialize():
             if products:
                 print("WARNING. Geometry iterator failed to initialize.")
@@ -421,7 +443,14 @@ class Patcher(ifcpatch.BasePatcher):
                 m = ifcopenshell.util.shape.get_shape_matrix(shape).copy()
                 m[:3, 3] /= self.unit_scale
                 x, y, z = m[:, 3][0:3].tolist()
-                self.shape_rows[shape_id] = (shape_id, x, y, z, m.tobytes(), geometry_id)
+                self.shape_rows[shape_id] = (
+                    shape_id,
+                    x,
+                    y,
+                    z,
+                    m.tobytes(),
+                    geometry_id,
+                )
             if not iterator.next():
                 break
 
@@ -431,7 +460,9 @@ class Patcher(ifcpatch.BasePatcher):
         for element_type in element_types:
             representation = None
             for context in body_contexts_objs:
-                representation = ifcopenshell.util.representation.get_representation(element_type, context)
+                representation = ifcopenshell.util.representation.get_representation(
+                    element_type, context
+                )
                 if representation:
                     break
             geometry_id = None
@@ -439,12 +470,19 @@ class Patcher(ifcpatch.BasePatcher):
                 geometry_id_ = str(representation.id())
                 if geometry_id_ in self.geometry_rows:
                     geometry_id = geometry_id_
-                elif geometry := ifcopenshell.geom.create_shape(self.settings, representation):
+                elif geometry := ifcopenshell.geom.create_shape(
+                    self.settings, representation
+                ):
                     geometry_id = geometry_id_
                     assert isinstance(geometry, W.Triangulation)
                     self.add_geometry_row(geometry_id, geometry)
             shape_id = element_type.id()
-            self.shape_rows[shape_id] = (shape_id, *(0.0, 0.0, 0.0), m_bytes, geometry_id)
+            self.shape_rows[shape_id] = (
+                shape_id,
+                *(0.0, 0.0, 0.0),
+                m_bytes,
+                geometry_id,
+            )
 
     def add_geometry_row(self, geometry_id: str, geometry: W.Triangulation) -> None:
         v = geometry.verts_buffer
@@ -473,7 +511,9 @@ class Patcher(ifcpatch.BasePatcher):
             final_lists.append(temp_list)
         return final_lists
 
-    def is_entity_list(self, attribute: ifcopenshell.ifcopenshell_wrapper.attribute) -> bool:
+    def is_entity_list(
+        self, attribute: ifcopenshell.ifcopenshell_wrapper.attribute
+    ) -> bool:
         attr = str(attribute.type_of_attribute())
         if (attr.startswith("<list") or attr.startswith("<set")) and "<entity" in attr:
             for data_type in re.findall("<(.*?) .*?>", attr):

@@ -4,7 +4,6 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 import ifcopenshell
 
@@ -51,7 +50,8 @@ Examples:
     parser.add_argument(
         "--no-full-schema",
         action="store_true",
-        help="Only create tables for IFC classes present in the file (default: create full schema)",
+        help="Only create tables for IFC classes present in the file "
+        "(default: create full schema)",
     )
 
     parser.add_argument(
@@ -109,7 +109,10 @@ Examples:
         sys.exit(1)
 
     if not input_path.suffix.lower() == ".ifc":
-        print(f"Warning: Input file '{args.input_file}' does not have .ifc extension.", file=sys.stderr)
+        print(
+            f"Warning: Input file '{args.input_file}' does not have .ifc extension.",
+            file=sys.stderr,
+        )
 
     try:
         # Load IFC file
@@ -136,16 +139,19 @@ Examples:
 
         output_path = patcher.get_output()
         if output_path:
-            print(f"Conversion completed successfully!")
+            print("Conversion completed successfully!")
             print(f"Output database: {output_path}")
         else:
-            print("Error: Conversion failed - no output file generated.", file=sys.stderr)
+            print(
+                "Error: Conversion failed - no output file generated.", file=sys.stderr
+            )
             sys.exit(1)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 
