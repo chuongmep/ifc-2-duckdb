@@ -64,7 +64,21 @@ class Patcher(ifcpatch.BasePatcher):
         should_skip_geometry_data: bool = False,
     ) -> None:
         super().__init__(file, logger)
-        self.logger = logger
+        # Configure logger
+        if logger is None:
+            configured_logger = logging.getLogger("ifc2duckdb")
+            if not configured_logger.handlers:
+                handler = logging.StreamHandler()
+                formatter = logging.Formatter(
+                    fmt="%(asctime)s - %(levelname)s - %(message)s",
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
+                handler.setFormatter(formatter)
+                configured_logger.addHandler(handler)
+                configured_logger.setLevel(logging.INFO)
+            self.logger = configured_logger
+        else:
+            self.logger = logger
         self.database = database
         self.full_schema = full_schema
         self.is_strict = is_strict
@@ -419,17 +433,30 @@ class Patcher(ifcpatch.BasePatcher):
             if products:
                 print("WARNING. Geometry iterator failed to initialize.")
             return
-        checkpoint = time.time()
+        start_time = time.time()
+        checkpoint = start_time
         progress = 0
         total = len(products)
         while True:
             progress += 1
             if progress % 250 == 0:
-                percent_created = round(progress / total * 100)
+                percent_created = round(progress / total * 100) if total else 100
                 percent_preprocessed = iterator.progress()
-                percent_average = (percent_created + percent_preprocessed) / 2
-                print(
-                    f"{progress} / {total} ({percent_created}% created, {percent_preprocessed}% preprocessed) elements processed in {time.time() - checkpoint:.2f}s ..."
+                elapsed_since_checkpoint = time.time() - checkpoint
+                elapsed_total = time.time() - start_time
+                rate = (250 / elapsed_since_checkpoint) if elapsed_since_checkpoint > 0 else 0.0
+                remaining = total - progress
+                eta_seconds = (remaining / rate) if rate > 0 else 0.0
+                self.logger.info(
+                    "Processed %d/%d | created=%d%% preprocessed=%d%% | batch=%.2fs rate=%.1f/s | elapsed=%.2fs ETA=%.2fs",
+                    progress,
+                    total,
+                    percent_created,
+                    percent_preprocessed,
+                    elapsed_since_checkpoint,
+                    rate,
+                    elapsed_total,
+                    eta_seconds,
                 )
                 checkpoint = time.time()
             shape = iterator.get()
