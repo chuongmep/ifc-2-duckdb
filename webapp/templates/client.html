@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DuckDB (Browser)</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <style>
+      .note { color: var(--muted); margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>DuckDB – Browser Storage</h1>
+      <p class="note">Uploads are kept in your browser (no server storage).</p>
+
+      <section class="upload">
+        <h2>Open .duckdb file</h2>
+        <input id="file" type="file" accept=".duckdb" />
+        <div id="fileInfo" class="muted"></div>
+      </section>
+
+      <section class="query">
+        <h2>Query</h2>
+        <textarea id="sql" rows="6" placeholder="Write SQL here..."></textarea>
+        <div class="actions">
+          <button id="run">Execute Query</button>
+        </div>
+        <div id="error" class="error" style="display:none;"></div>
+      </section>
+
+      <section class="results">
+        <h2>Results</h2>
+        <div class="table-wrapper">
+          <table id="table"></table>
+        </div>
+      </section>
+
+      <p class="muted">Tip: This page runs fully in your browser using DuckDB-WASM.</p>
+    </div>
+
+    <script type="module" src="/static/duckdb-app.js"></script>
+  </body>
+  
+</html>
+
+

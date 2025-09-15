@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DuckDB Viewer</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>DuckDB Viewer</h1>
+
+      <section class="upload">
+        <h2>Upload .duckdb file</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+          <input type="file" name="file" accept=".duckdb" required />
+          <button type="submit">Upload</button>
+        </form>
+        {% if db_loaded %}
+        <p>Loaded: <strong>{{ db_name }}</strong></p>
+        {% endif %}
+        <p class="muted">Prefer client-side only? <a href="/client">Open browser-mode</a>.</p>
+      </section>
+
+      <section class="query">
+        <h2>Query</h2>
+        <form action="/query" method="post">
+          <textarea name="sql" rows="6" placeholder="Write SQL here..." required>{{ sql }}</textarea>
+          <div class="actions">
+            <button type="submit">Execute Query</button>
+          </div>
+        </form>
+      </section>
+
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+
+      {% if columns and rows is not none %}
+      <section class="results">
+        <h2>Results</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                {% for col in columns %}
+                <th>{{ col }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                {% for cell in row %}
+                <td>{{ cell }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+    </div>
+  </body>
+  
+</html>
+
+

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: ifc2duckdb-webapp
+    env: python
+    plan: free
+    buildCommand: pip install -r webapp/requirements.txt
+    startCommand: uvicorn webapp.main:app --host 0.0.0.0 --port $PORT --workers 2
+    healthCheckPath: /healthz
+

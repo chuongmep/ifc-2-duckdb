@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  web:
+    build:
+      context: ./webapp
+    image: ifc2duckdb-webapp:latest
+    container_name: ifc2duckdb-web
+    ports:
+      - "8000:8000"
+    environment:
+      - UVICORN_WORKERS=2
+    volumes:
+      - ./webapp:/app/webapp:ro
+      - ./webapp/uploads:/app/webapp/uploads
+    restart: unless-stopped
+
